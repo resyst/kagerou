@@ -8,29 +8,29 @@ const CONFIG_DEFAULT = {
   lang: 'ko',
   style: {
     // body
-    'resize-factor': 1,
+    'resize-factor': 1.125,
     'body-margin': '0.25rem',
-    'body-font': "'Lato', 'Source Han Sans', 'Meiryo UI', '맑은 고딕', sans-serif",
+    'body-font': "Overpass",
     // header / ui
     'nav-opacity': 1,
-    'nav-bg': 'rgba(31, 31, 31, 0.9)',
-    'nav-fg': '#ddd',
-    'header-bg': 'rgba(0, 0, 0, 0.5)',
-    'dropdown-bg': 'rgba(31, 31, 31, 0.95)',
-    'dropdown-fg': '#ddd',
+    'nav-bg': 'rgba(67, 76, 94, 0.8)',
+    'nav-fg': '#d8dee9',
+    'header-bg': 'rgba(52, 60, 75, 0.8)',
+    'dropdown-bg': '#3b4252',
+    'dropdown-fg': '#d8dee9',
     'content-bg': '', // URL
-    'content-bg-color': 'rgba(0, 0, 0, 0.5)',
+    'content-bg-color': 'rgba(46, 52, 64, 0.8)',
     'content-bg-opacity': 1,
     'content-bg-filter': '',
-    'content-fg': '#eee',
-    'cell-bg': 'rgba(255, 255, 255, 0.1)',
-    'my-row-fg': 'rgba(179, 229, 252, 1)',
+    'content-fg': '#eceff4',
+    'cell-bg': 'rgba(67, 76, 94, 0.8)',
+    'my-row-fg': '#88c0d0',
     'content-align': 'center',
-    'color-accent': '#26c6da',
+    'color-accent': '#b48ead',
     'shadow-card': '0 0.05rem 0.25rem rgba(0, 0, 0, 0.5)',
     'shadow-text': '0 0 0.125em rgba(0, 0, 0, 1)',
     'font-size-small': '0.75rem',
-    'gauge-height': '10%',
+    'gauge-height': '0%',
     'graph-height': '1.5rem'
   },
   tabs: [
@@ -46,7 +46,9 @@ const CONFIG_DEFAULT = {
         'deal.per_second',
         'deal.critical',
         'deal.direct',
-        'deal.crit_direct'
+        'deal.crit_direct',
+        'deal.maxhit',
+        'etc.death'
       ]
     }, {
       id: 1,
@@ -93,19 +95,19 @@ const CONFIG_DEFAULT = {
     '_i-owner': 6,
     '_i-name': 6,
     '_deal-total': 4.5,
-    '_deal-per_second': 3.5,
+    '_deal-per_second': 4,
     '_deal-pct': 2,
     '_deal-failure': 3,
     '_deal-accuracy': 3,
     '_deal-swing': 2.5,
     '_deal-miss': 2.5,
     '_deal-hitfail': 2.5,
-    '_deal-critical': 2.5,
-    '_deal-direct': 2.5,
-    '_deal-crit_direct': 2.5,
+    '_deal-critical': 3,
+    '_deal-direct': 3,
+    '_deal-crit_direct': 3,
     '_deal-crittypes': 4,
     '_deal-max': 2.5,
-    '_deal-maxhit': 7,
+    '_deal-maxhit': 8,
     '_deal-maxskill': 5,
     '_deal-last10': 3.5,
     '_deal-last30': 3.5,
@@ -128,7 +130,7 @@ const CONFIG_DEFAULT = {
     '_heal-maxskill': 4,
     '_etc-powerdrain': 4,
     '_etc-powerheal': 4,
-    '_etc-death': 2
+    '_etc-death': 2.5
   },
   color: {
     'gauge-default': '#444',
@@ -159,17 +161,17 @@ const CONFIG_DEFAULT = {
   },
   format: {
     significant_digit: {
-      dps: 0,
-      hps: 0,
-      accuracy: 0,
-      critical: 0
+      dps: 2,
+      hps: 2,
+      accuracy: 2,
+      critical: 2
     },
     merge_pet: true,
     myname: [],
     use_short_name: 0,
     use_skill_aliases: true,
-    use_tailing_pct: true,
-    small_lower_numbers: false
+    use_tailing_pct: false,
+    small_lower_numbers: true
   },
   filter: {
     unusual_spaces: false,
