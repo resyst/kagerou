@@ -1,8 +1,8 @@
 'use strict'
 
-const VERSION = '0.8.4'
-const CODENAME = 'tears proof masquerade'
-const DESCRIPTION = Date.now() > 15959e8? '偽りなき技巧が挑戦への扉を開く' : 'rest in peace, rt-karen.'
+const VERSION = '0.8.14'
+const CODENAME = 'minne'
+const DESCRIPTION = '記憶の片隅で眠っていた いつか聴いた旋律'
 
 const CONFIG_DEFAULT = {
   lang: 'ko',
@@ -92,6 +92,7 @@ const CONFIG_DEFAULT = {
   ],
   colwidth: {
     '_i-class': 2,
+    '_i-rank': 2,
     '_i-owner': 6,
     '_i-name': 6,
     '_deal-total': 4.5,
@@ -106,6 +107,7 @@ const CONFIG_DEFAULT = {
     '_deal-direct': 3,
     '_deal-crit_direct': 3,
     '_deal-crittypes': 4,
+    '_deal-critpcts': 6,
     '_deal-max': 2.5,
     '_deal-maxhit': 8,
     '_deal-maxskill': 5,
@@ -143,6 +145,7 @@ const CONFIG_DEFAULT = {
     drg: 'rgb(63, 81, 181)', // Indigo 500
     brd: 'rgb(158, 157, 36)', // Lime 800
     nin: 'rgb(211, 47, 47)', // Red 700 // 와! 시바! 진성! 닌자다!
+    rpr: 'rgb(254, 179, 0)', // Amber 600
     smn: 'rgb(46, 125, 50)', // Green 800
     blm: 'rgb(126, 87, 194)', // Deep Purple 400
     mch: 'rgb(0, 151, 167)', // Cyan 700
@@ -153,6 +156,7 @@ const CONFIG_DEFAULT = {
     whm: 'rgb(117, 117, 117)', // Gray 600
     sch: 'rgb(121, 134, 203)', // Indigo 300
     ast: 'rgb(121, 85, 72)', // Brown 500
+    sge: 'rgb(79, 195, 247)', // Light Blue 300
     'smn-pet': 'rgba(46, 125, 50, 0.5)',
     'sch-pet': 'rgba(121, 134, 203, 0.5)',
     'mch-pet': 'rgba(0, 151, 167, 0.5)',
@@ -164,14 +168,17 @@ const CONFIG_DEFAULT = {
       dps: 2,
       hps: 2,
       accuracy: 2,
-      critical: 2
+      critical: 2,
+      damage: 0
     },
+    thousands_separator: '',
     merge_pet: true,
     myname: [],
     use_short_name: 0,
     use_skill_aliases: true,
     use_tailing_pct: false,
-    small_lower_numbers: true
+    small_lower_numbers: true,
+    number_abbreviation: false
   },
   filter: {
     unusual_spaces: false,
@@ -224,7 +231,8 @@ const COLUMN_SORTABLE = [
   'tank.damage',
   'tank.heal',
   'heal.per_second',
-  'heal.total'
+  'heal.total',
+  '-etc.death'
 ]
 const COLUMN_MERGEABLE = [
   'encdps', 'damage', 'damage%',
@@ -242,8 +250,8 @@ const COLUMN_USE_LARGER = {
 
 const VALID_PLAYER_JOBS = [
   'GLA', 'GLD', 'MRD', 'PUG', 'PGL', 'LNC', 'ROG', 'ARC', 'THM', 'ACN', 'CNJ',
-  'PLD', 'WAR', 'MNK', 'DRG', 'NIN', 'BRD', 'BLM', 'SMN', 'SCH', 'WHM', 'DRK',
-  'MCH', 'AST', 'SAM', 'RDM', 'BLU', 'GNB', 'DNC',
+  'PLD', 'WAR', 'MNK', 'DRG', 'NIN', 'RPR', 'BRD', 'BLM', 'SMN', 'SCH', 'WHM',
+  'DRK', 'MCH', 'AST', 'SGE', 'SAM', 'RDM', 'BLU', 'GNB', 'DNC',
   'CRP', 'BSM', 'ARM', 'GSM', 'LTW', 'WVR', 'ALC', 'CUL', 'MIN', 'BTN', 'FSH'
 ]
 
@@ -338,6 +346,10 @@ const COLUMN_INDEX = {
         return job
       }
     },
+    rank: {
+      v: _ => _.rank,
+      f: _ => `#${_}`
+    },
     owner: {
       v: _ => resolveClass(_.Job, _.name)[2],
       f: _ => `<span>${_}</span>`
@@ -367,7 +379,7 @@ const COLUMN_INDEX = {
         if(isNaN(_)) {
           return '---'
         }
-        return formatDps(_, +conf.format.significant_digit.dps)
+        return formatDps(_, conf.format)
       }
     },
     pct: {
@@ -378,7 +390,10 @@ const COLUMN_INDEX = {
         else return _ + (conf.format.use_tailing_pct? '<small>%</small>' : '')
       }
     },
-    total: 'damage',
+    total: {
+      v: 'damage',
+      f: (_, conf) => formatDps(_, conf.format, 'damage', true)
+    },
     failure: {
       v: _ => _.swings > 0? _.misses / _.swings * 100 : -1,
       f: (_, conf) =>
@@ -417,15 +432,28 @@ const COLUMN_INDEX = {
       v: _ => [_.DirectHitCount || '-', _.crithits || '-', _.CritDirectHitCount || '-'],
       f: _ => _.join('/')
     },
+    critpcts: {
+      v: _ => [_.DirectHitCount || 0, _.crithits || 0, _.CritDirectHitCount || 0, _.swings || 1],
+      f: (_, conf) => {
+        const swings = parseInt(_.pop()) || 1
+        _ = _.map(_ => (parseInt(_) / swings * 100).toFixed(0))
+
+        if(conf.format.use_tailing_pct) {
+          return _.map(_ => _ + '<small>%</small> ').join('')
+        } else {
+          return _.join('/')
+        }
+      }
+    },
     max: {
       v: 'MAXHIT',
-      f: _ => formatDps(_, 0)
+      f: (_, conf) => formatDps(_, conf.format, 'damage', true)
     },
     maxhit: {
       v: 'maxhit',
       f: (_, conf) => {
         let map = l.skillname(_, conf.format.use_skill_aliases)
-        return `${formatDps(map[1], 0)} <small>${map[0]}</small>`
+        return `${formatDps(map[1], conf.format, 'damage', true)} <small>${map[0]}</small>`
       }
     },
     maxskill: {
@@ -434,21 +462,15 @@ const COLUMN_INDEX = {
     },
     last10: {
       v: 'Last10DPS',
-      f: (_, conf) => {
-        return isNaN(_)? '0' : formatDps(_, conf.format.significant_digit.dps)
-      }
+      f: (_, conf) => isNaN(_)? '0' : formatDps(_, conf.format)
     },
     last30: {
       v: 'Last30DPS',
-      f: (_, conf) => {
-        return isNaN(_)? '0' : formatDps(_, conf.format.significant_digit.dps)
-      }
+      f: (_, conf) => isNaN(_)? '0' : formatDps(_, conf.format)
     },
     last60: {
       v: 'Last60DPS',
-      f: (_, conf) => {
-        return isNaN(_)? '0' : formatDps(_, conf.format.significant_digit.dps)
-      }
+      f: (_, conf) => isNaN(_)? '0' : formatDps(_, conf.format)
     }/*,
     last180: {
       v: _ => 'Last180DPS' in _? _.Last180 : NaN
@@ -458,11 +480,11 @@ const COLUMN_INDEX = {
   tank: {
     damage: {
       v: 'damagetaken',
-      f: _ => '-' + _
+      f: (_, conf) => '-' + formatDps(_, conf.format, 'damage', true)
     },
     heal: {
       v: 'healstaken',
-      f: _ => '+' + _
+      f: (_, conf) => '+' + formatDps(_, conf.format, 'damage', true)
     },
     parry: 'ParryPct',
     block: 'BlockPct',
@@ -474,7 +496,9 @@ const COLUMN_INDEX = {
       v: 'enchps',
       f: (_, conf) => {
         _ = pFloat(_)
-        return isNaN(_)? '0' : formatDps(_, conf.format.significant_digit.hps)
+        return isNaN(_)?
+          '0'
+        : formatDps(_, conf.format, 'hps')
       }
     },
     pct: {
@@ -485,7 +509,10 @@ const COLUMN_INDEX = {
         else return _ + '<small>%</small>'
       }
     },
-    total: 'healed',
+    total: {
+      v: 'healed',
+      f: (_, conf) => formatDps(_, conf.format, 'damage', true)
+    },
     over: {
       v: _ => _['OverHealPct'],
       f: _ => _ && _.replace? _.replace('%', '<small>%</small>') : '---'
