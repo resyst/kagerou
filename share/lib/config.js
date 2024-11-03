@@ -171,7 +171,7 @@ const CONFIG_DEFAULT = {
       hps: 2,
       accuracy: 2,
       critical: 2,
-      damage: 0
+      damage: 2
     },
     thousands_separator: '',
     merge_pet: true,
